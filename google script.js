@@ -1,55 +1,55 @@
-var POST_URL = "WEBHOOKURL";
+const POST_URL = "WEBHOOK URL";
+const EMBED_TITLE = "TOP TEXT CHANGE THIS IN SCRIPT";
+const EMBED_FOOTER_TEXT = "BOTTOM TEXT CHANGE THIS IN SCRIPT";
+const SUBMITTED_TIMESTAMP = true; // set to false to disable showing the timestamp of the response submission
+const FORM_LINK_AS_URL = false; // set to true to set the URL for the embed to the form response
+const MESSAGE = ""; // set an additional message to be sent in the webhook (ex: a role ping)
 
-function onSubmit(e) {
-    var form = FormApp.getActiveForm();
-    var allResponses = form.getResponses();
-    var latestResponse = allResponses[allResponses.length - 1];
-    var response = latestResponse.getItemResponses();
-    var items = [];
+const onSubmit = e => {
+    const form = FormApp.getActiveForm();
+    const allResponses = form.getResponses();
+    const latestResponse = allResponses[allResponses.length - 1];
+    const response = latestResponse.getItemResponses();
+    const items = [];
 
-    for (var i = 0; i < response.length; i++) {
-        var question = response[i].getItem().getTitle();
-        var answer = response[i].getResponse();
+    for (let i = 0; i < response.length; i++) {
+        const question = response[i].getItem().getTitle();
+        const answer = response[i].getResponse();
+        let parts;
+
         try {
-            var parts = answer.match(/[\s\S]{1,1024}/g) || [];
+            parts = answer.match(/[\s\S]{1,1024}/g) || [];
         } catch (e) {
-            var parts = answer;
+            parts = answer;
         }
 
-        if (answer == "") {
-            continue;
-        }
-        for (var j = 0; j < parts.length; j++) {
-            if (j == 0) {
-                items.push({
-                    "name": question,
-                    "value": parts[j],
-                    "inline": false
-                });
-            } else {
-                items.push({
-                    "name": question.concat(" (cont.)"),
-                    "value": parts[j],
-                    "inline": false
-                });
-            }
-        }
+        if (answer === "") continue;
+
+        items.push({
+            "name": question,
+            "value": parts.join(', '),
+            "inline": false
+        });
     }
 
-    var options = {
+    const embed = {
+        "title": EMBED_TITLE,
+        "url": FORM_LINK_AS_URL ? latestResponse.getEditResponseUrl() : null,
+        "fields": items,
+        "timestamp": SUBMITTED_TIMESTAMP ? latestResponse.getTimestamp() : null,
+        "footer": {
+            "text": SUBMITTED_TIMESTAMP ? "Submitted on" : EMBED_FOOTER_TEXT
+        }
+    };
+
+    const options = {
         "method": "post",
         "headers": {
             "Content-Type": "application/json",
         },
         "payload": JSON.stringify({
-            "content": null, // This is not an empty string
-            "embeds": [{
-                "title": "TOP TEXT CHANGE THIS IN SCRIPT",
-                "fields": items,
-                "footer": {
-                    "text": "BOTTOM TEXT CHANGE THIS IN SCRIPT"
-                }
-            }]
+            "content": MESSAGE ? message : null, // This is not an empty string if not used
+            "embeds": [embed]
         })
     };
 
